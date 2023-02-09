@@ -1,0 +1,24 @@
+{
+  "name": "APP14",
+  "vertices": ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12","v13","v14"],
+  "edges": [
+    {"startVertex": "v1","endVertex": "v2","weight": 1.0},
+    {"startVertex": "v1","endVertex": "v3","weight": 1.0},
+    {"startVertex": "v2","endVertex": "v4","weight": 0.6},
+    {"startVertex": "v2","endVertex": "v5","weight": 0.4},
+    {"startVertex": "v4","endVertex": "v7","weight": 1.0},
+    {"startVertex": "v5","endVertex": "v12","weight": 1.0},
+    {"startVertex": "v12","endVertex": "v7","weight": 1.0},
+    {"startVertex": "v5","endVertex": "v11","weight": 1.0},
+    {"startVertex": "v11","endVertex": "v14","weight": 0.3},
+    {"startVertex": "v11","endVertex": "v13","weight": 0.7},
+    {"startVertex": "v14","endVertex": "v7","weight": 1.0},
+    {"startVertex": "v13","endVertex": "v7","weight": 1.0},
+    {"startVertex": "v3","endVertex": "v10","weight": 0.2},
+    {"startVertex": "v3","endVertex": "v9","weight": 0.8},
+    {"startVertex": "v10","endVertex": "v6","weight": 1.0},
+    {"startVertex": "v9","endVertex": "v6","weight": 1.0},
+    {"startVertex": "v6","endVertex": "v8","weight": 1.0},
+    {"startVertex": "v7","endVertex": "v8","weight": 1.0}
+  ]
+}
