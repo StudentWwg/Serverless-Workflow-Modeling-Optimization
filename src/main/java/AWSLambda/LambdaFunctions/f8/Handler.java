@@ -5,15 +5,15 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f8.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
-        int i=0;
-        int finalResult = 0;
-        while(i<42){
-            finalResult = fibonacci(30);
+        int i = 0;
+        double finalResult = 0;
+        while (i < 210000) {
+            finalResult = e_x(10500, 50);
             i++;
         }
 
@@ -21,19 +21,29 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
         head.put("StatusCode", "200");
         head.put("FunctionName", "f8");
         head.put("Task type", "CPU intensive task");
-        head.put("FibonacciResult", String.valueOf(finalResult));
+        head.put("e^x", String.valueOf(finalResult));
         Map<String, String> body = new HashMap<>();
-        for(String key : event.keySet())
-            body.put(key,event.get(key));
+        for (String key : event.keySet())
+            body.put(key, event.get(key));
         Map<String, Map<String, String>> result = new HashMap<>();
         result.put("head", head);
         result.put("body", body);
         return result;
     }
 
-    private int fibonacci(int n) {
-        if(n<=1) return n;
-        else
-            return fibonacci(n-1) + fibonacci(n-2);
+    private double e_x(double x, int n) {
+        double result = 0;
+        for (int i = 0; i <= n; i++) {
+            result += Math.pow(x, n) / Factorial(n);
+        }
+        return result;
+    }
+
+    private double Factorial(int n) {
+        if(n==0 || n==1) return 1;
+        double result = 1;
+        for (int i = 2; i <= n; i++)
+            result *= n;
+        return result;
     }
 }

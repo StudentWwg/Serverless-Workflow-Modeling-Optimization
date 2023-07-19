@@ -2,7 +2,6 @@ package AWSLambda.LambdaFunctions.f5;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import org.json.JSONObject;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
@@ -11,19 +10,19 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f5.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         byte[] finalResult = null;
-        for(int i=0;i<19000;i++){
+        for(int i=0;i<35000;i++){
             try {
                 KeyGenerator generator = KeyGenerator.getInstance("HmacSHA512");
                 SecretKey secretKey = generator.generateKey();
                 Mac mac = Mac.getInstance("HmacMD5");
                 mac.init(secretKey);
                 String data = "Lambda function f5";
-                finalResult = mac.doFinal(data.getBytes());  //计算摘要
+                finalResult = mac.doFinal(data.getBytes());  //generate summary
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 e.printStackTrace();
             }

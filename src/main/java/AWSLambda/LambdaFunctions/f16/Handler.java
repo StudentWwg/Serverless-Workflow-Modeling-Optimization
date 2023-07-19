@@ -14,19 +14,17 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-//处理程序: f16.Handler::handleRequest
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
-        //1.获取存储桶对象 2.将对象读取并输出
-        String AWS_ACCESS_KEY = "AKIARQP66F75QZZF4AGW";
-        String AWS_SECRET_KEY = "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";
+        String AWS_ACCESS_KEY = "xxxxxxxxxx";
+        String AWS_SECRET_KEY = "xxxxxxxxxx";
         String bucketName = "serverless-network-intensive-source-bucket";
         AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY, AWS_SECRET_KEY);
         AmazonS3 s3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).
-                withRegion(Regions.AP_EAST_1).build();
-        // 将存储桶内所有对象全都下载
+                withRegion(Regions.US_EAST_1).build();
+        // download all objects in S3 bucket
         ListObjectsV2Request v2Request = new ListObjectsV2Request().withBucketName(bucketName);
         ListObjectsV2Result v2Result = s3.listObjectsV2(v2Request);
         try {
@@ -37,8 +35,10 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
                     InputStream objectDataInputStream = S3object.getObjectContent();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(objectDataInputStream));
                     String line = null;
-                    while ((line = reader.readLine()) != null)
+                    while ((line = reader.readLine()) != null) {
                         System.out.println(line);
+                        System.out.println("");
+                    }
                     String token = v2Result.getNextContinuationToken();
                     v2Request.setContinuationToken(token);
                 }

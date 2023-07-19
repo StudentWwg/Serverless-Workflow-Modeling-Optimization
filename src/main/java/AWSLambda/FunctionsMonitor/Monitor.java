@@ -15,11 +15,10 @@ public class Monitor {
     private static AWSLogs logsClient;
 
     public static DataTypeOfLog logResultParsing(InvokeResult response, String functionName) {
-        Map<String, String> m = new HashMap<>();
         String RequestId = response.getSdkResponseMetadata().getRequestId();
         String logString = null;
         try {
-            logString = new String(Base64.getDecoder().decode(response.getLogResult()), "UTF-8");  //获得的Logresult需要解码
+            logString = new String(Base64.getDecoder().decode(response.getLogResult()), "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -43,11 +42,13 @@ public class Monitor {
             functionState = "Success";
         else
             functionState = "Error";
-        DataTypeOfLog dataTypeOfLog = new DataTypeOfLog(RequestId, duration, billedDuration, memorySize, maxMemoryUsed, functionState, functionName);
+        Date date = new Date();
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DataTypeOfLog dataTypeOfLog = new DataTypeOfLog(RequestId, duration, billedDuration, memorySize, maxMemoryUsed, functionState, functionName, dateFormat.format(date));
         return dataTypeOfLog;
     }
 
-    public static void getAmazonCloudWatchLogs(String logGroupName, String startTimeInString, String endTimeInString, String APPName){
+    public static void getAmazonCloudWatchLogs(String logGroupName, String startTimeInString, String endTimeInString, String APPName, int iter){
         Monitor.logsClient = Tools.getAWSLogsClient();
         Long logStartTime= 0L;
         Long logEndTime = 0L;
@@ -82,7 +83,7 @@ public class Monitor {
 
         List<List<ResultField>> results = getQueryResultsResult.getResults();
         try{
-            TimeUnit.SECONDS.sleep(10);   //add a time delay to get results from AWS CloudWatch
+            TimeUnit.SECONDS.sleep(10);
         }catch (InterruptedException e){
             e.printStackTrace();
             System.exit(1);
@@ -90,9 +91,11 @@ public class Monitor {
         ArrayList<DataTypeOfLog> invokeResults = new ArrayList<>();
 
         for(List<ResultField> resultFields : results){
+                String UTCSimpleTimeFormatTime = resultFields.get(0).getValue();
                 String message = resultFields.get(1).getValue();
                 String[] infoOfLogs = message.split("\t");
                 DataTypeOfLog dataOfLog = new DataTypeOfLog();
+                dataOfLog.setUTCTimeStamp(UTCSimpleTimeFormatTime);
                 for(int i=0;i< infoOfLogs.length;i++){
                     String[] keyValuePair = infoOfLogs[i].split(": ");
                     if(i==0) dataOfLog.setRequestedId(keyValuePair[1]);
@@ -105,6 +108,6 @@ public class Monitor {
                 dataOfLog.setFunctionState("Success");
                 invokeResults.add(dataOfLog);
         }
-        Tools.generateFunctionInvokeResult(invokeResults, "CloudWatchLog", APPName);
+        Tools.generateFunctionInvokeResult(invokeResults, "CloudWatchLog", APPName, iter);
     }
 }

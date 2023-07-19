@@ -1,6 +1,7 @@
 package AWSLambda.PerfCostModelAccuracy;
 
 import AWSLambda.FunctionsMonitor.Monitor;
+import AWSLambda.Util.Tools;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -10,15 +11,16 @@ import serverlessWorkflow.PerformanceAndCostModel.PerfOpt;
 import serverlessWorkflow.PerformanceAndCostModel.ServerlessAppWorkflow;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class Accuracy {
-    public static double getAvgDurationOfStateMachine(String APPName) {
-//        String durationFilePath  = null;
+    public static double getAvgDurationOfStateMachine(String APPName, int iter) {
         double avgDuration = 0;
         try {
             File stateMachineInvokeResult = new File(new File("").getCanonicalPath() +
-                    "/src/main/resources/AWSLambda_StateMachine_invoke_results/AWSLambda_StateMachine_" + APPName + "_Logs.xls");
+                    "/src/main/resources/AWSLambda_StateMachine_invoke_results/"+iter+"/AWSLambda_StateMachine_" + APPName + "_Logs.xls");
             FileInputStream inputStream = new FileInputStream(stateMachineInvokeResult.getPath());
             HSSFWorkbook workbook = new HSSFWorkbook(inputStream);
             HSSFSheet sheet = workbook.getSheet("StateMachine_" + APPName + "_logs");
@@ -40,27 +42,37 @@ public class Accuracy {
         return avgDuration;
     }
 
-    public static double getAvgCostOfStateMachine(String APPName, String startTime, String endTime, int repeatedTimes) {
+    public static double getAvgCostOfStateMachine(String APPName, String startTime, String endTime, int repeatedTimes,String[] taskTypes, int iter) {
         double cost = 0;
         int funcNum = Integer.valueOf(APPName.split("APP")[1]);
         try {
-            for (int i = 1; i <= funcNum; i++) { //计算所有函数的cost之和
+            long sizeOfS3Object = Tools.getTotalSizeOfS3Object();
+            for (int i = 1; i <= funcNum; i++) {
+                double rtOfFunction = 0;
+                double costOfFunction = 0;
                 String logGroupName = "/aws/lambda/f" + i;
-                Monitor.getAmazonCloudWatchLogs(logGroupName, startTime, endTime, APPName);  //先获取函数执行日志
+                Monitor.getAmazonCloudWatchLogs(logGroupName, startTime, endTime, APPName, iter);
                 String funcLogPath = new File("").getCanonicalPath() +
-                        "/src/main/resources/AWSLambda_functions_invoke_results_got_by_cloudwatchlog/"+APPName+"/AWSLambda_f" + i + "_Logs.xls";
+                        "/src/main/resources/AWSLambda_functions_invoke_results_got_by_cloudwatchlog/"+APPName+"/"+iter+"/AWSLambda_f" + i + "_Logs.xls";
                 FileInputStream inputStream = new FileInputStream(funcLogPath);
                 HSSFWorkbook workbook = new HSSFWorkbook(inputStream);
                 HSSFSheet sheet = workbook.getSheet("f" + i + "_logs");
                 int rowNums = sheet.getLastRowNum();
-                System.out.println("AWS Lambda function f" +i + " executed " + rowNums +" times.");
+                System.out.print("AWS Lambda function f" +i + " executed " + rowNums +" times. ");
                 for (int j = 1; j <= rowNums; j++) {
                     HSSFRow aRow = sheet.getRow(j);
-                    double rt = aRow.getCell(5).getNumericCellValue();
+                    double aRT = aRow.getCell(5).getNumericCellValue();
+                    rtOfFunction += aRT;
                     double memSize = aRow.getCell(2).getNumericCellValue();
-                    cost += (rt / 1000 * memSize / 1024 * 0.00002292 + 0.00000028) * 1000000;
+                    costOfFunction += (aRT / 1000 * memSize / 1024 * 0.0000166667 + 0.0000002) * 10000000;
                 }
+                if(taskTypes[i-1].equals("Network I/O")){
+                    double costOfNetWorkTask = (double) sizeOfS3Object / 1024 / 1024 * 0.09 * 10000000;
+                    costOfFunction += costOfNetWorkTask;
+                }
+                cost += costOfFunction;
                 inputStream.close();
+                System.out.println("Average runtime of f"+i+": "+(rtOfFunction/rowNums)+" ms, Average cost of f"+i+": "+(costOfFunction/rowNums)+" USD.");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -72,6 +84,10 @@ public class Accuracy {
 
     public static double getAvgDurationOfPerfCostModel(TreeMap<String, Integer> memConfig, String APPName) {
         PerfOpt perfOpt = Accuracy.generatePerfOPTAndUpdateMemConfig(memConfig,APPName);
+
+        for(WVertex aVertex : perfOpt.getApp().getGraph().getDirectedGraph().vertexSet()){
+            System.out.println(aVertex.toString()+": "+aVertex.getMem()+"MB, "+aVertex.getRt()+"ms, "+aVertex.getCost()+"USD.");
+        }
         double duration = perfOpt.getApp().GetAverageRT();
         return duration;
     }
@@ -92,7 +108,7 @@ public class Accuracy {
         }
 
         APPGraph appGraph = new APPGraph(jsonPath);
-        ServerlessAppWorkflow App = new ServerlessAppWorkflow(appGraph,"SFN","AWS",null,-1,-1);
+        ServerlessAppWorkflow App = new ServerlessAppWorkflow(appGraph,"SFN","AWS",-1,-1);
         PerfOpt perfOpt = new PerfOpt(App, true, null);
         TreeMap<WVertex, Integer> updateMemConfig = new TreeMap<WVertex, Integer>();
         WVertex[] vertices = perfOpt.getApp().getGraph().getDirectedGraph().vertexSet().toArray(new WVertex[0]);
@@ -109,5 +125,30 @@ public class Accuracy {
         }
         perfOpt.update_App_workflow_mem_rt_cost(updateMemConfig);
         return perfOpt;
+    }
+
+    public static void getAvgAccuracy(){
+        String[] app = {"APP10","APP16","APP22"};
+        double[] accuracyOfPerf = new double[app.length];
+        double[] accuracyOfCost = new double[app.length];
+        for(int i=0;i<app.length;i++){
+            try{
+                String pathOfAvgAccuracyOfApp = new File("").getCanonicalPath() + "/src/main/resources/accuracy/"+app[i]+"_AvgAccuracy.xls";
+                FileInputStream inputStream = new FileInputStream(pathOfAvgAccuracyOfApp);
+                HSSFWorkbook workbook = new HSSFWorkbook(inputStream);
+                HSSFSheet sheet = workbook.getSheet("Accuracy");
+                HSSFRow aRow = sheet.getRow(1);
+                accuracyOfPerf[i] = aRow.getCell(1).getNumericCellValue();
+                accuracyOfCost[i] = aRow.getCell(2).getNumericCellValue();
+                inputStream.close();
+            }catch (IOException e){
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+        System.out.println("Average accuracy of performance: " +
+                new BigDecimal(Arrays.stream(accuracyOfPerf).average().getAsDouble()).setScale(2, RoundingMode.HALF_UP) + "%.");
+        System.out.println("Average accuracy of cost: " +
+                new BigDecimal(Arrays.stream(accuracyOfCost).average().getAsDouble()).setScale(2, RoundingMode.HALF_UP) + "%.");
     }
 }

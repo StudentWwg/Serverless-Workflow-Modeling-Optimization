@@ -2,17 +2,18 @@ package AWSLambda.LambdaFunctions.f10;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f10.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         int finalResult = 0;
-        while(i<80){
+        while(i<500){
             finalResult = fibonacci(28);
             i++;
         }

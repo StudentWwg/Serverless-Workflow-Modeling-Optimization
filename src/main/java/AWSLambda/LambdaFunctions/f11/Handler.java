@@ -8,14 +8,14 @@ import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-//处理程序: f11.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         boolean file_indicator = false;
-        while (i<32) {
+        while (i<120) {
             String path = "/tmp/1MB";
             File file = new File(path);
             file_indicator = file.isFile();

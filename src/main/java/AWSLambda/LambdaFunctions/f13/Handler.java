@@ -5,15 +5,15 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f13.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         long finalResult = 0;
-        while(i<4000){
-            finalResult = Handler.factorial(35000);  //这里的计算结果早就溢出了，所以最终结果为0
+        while(i<16000){
+            finalResult = Handler.factorial(35000);  //perhaps the result is 0 because of overflow
             i++;
         }
 

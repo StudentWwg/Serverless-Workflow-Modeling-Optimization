@@ -1,5 +1,10 @@
 package AWSLambda.FunctionsMonitor;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class DataTypeOfLog {
     private String requestedId;
     private double duration;
@@ -8,6 +13,20 @@ public class DataTypeOfLog {
     private int maxMemoryUsed;
     private String functionState;
     private String functionName;
+    private long UTCTimeStamp;
+
+    public long getUTCTimeStamp() {return UTCTimeStamp;}
+
+    public void setUTCTimeStamp(String UTCTimeStamp) {
+        try{
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date date = dateFormat.parse(UTCTimeStamp);
+            this.UTCTimeStamp = date.getTime();
+        }catch (ParseException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 
     public String getRequestedId() {
         return requestedId;
@@ -65,7 +84,7 @@ public class DataTypeOfLog {
         this.functionName = functionName;
     }
 
-    public DataTypeOfLog(String requestedId, double duration, int billedDuration, int memorySize, int maxMemoryUsed, String functionState, String functionName) {
+    public DataTypeOfLog(String requestedId, double duration, int billedDuration, int memorySize, int maxMemoryUsed, String functionState, String functionName, String simpleFormatTime) {
         this.requestedId = requestedId;
         this.duration = duration;
         this.billedDuration = billedDuration;
@@ -73,6 +92,14 @@ public class DataTypeOfLog {
         this.maxMemoryUsed = maxMemoryUsed;
         this.functionState = functionState;
         this.functionName = functionName;
+        try {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date date = dateFormat.parse(simpleFormatTime);
+            this.UTCTimeStamp = date.getTime();
+        }catch (ParseException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     public DataTypeOfLog() {
@@ -83,6 +110,7 @@ public class DataTypeOfLog {
         this.maxMemoryUsed = 0;
         this.functionState = "null";
         this.functionName = "null";
+        this.UTCTimeStamp=0;
     }
 
     @Override

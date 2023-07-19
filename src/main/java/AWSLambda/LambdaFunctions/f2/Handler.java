@@ -6,15 +6,14 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import java.util.HashMap;
 import java.util.Map;
 
-//处理程序: f2.Handler::handleRequest
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         double pi_n = 0;
-        while (i<500){
-            pi_n = pi(8000);
+        while (i<999){
+            pi_n = pi(9000);
             i++;
         }
 
@@ -22,6 +21,7 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
         head.put("StatusCode", "200");
         head.put("FunctionName", "f2");
         head.put("Task type", "CPU intensive task");
+        head.put("PI", String.valueOf(pi_n));
         Map<String, String> body = new HashMap<>();
         for(String key : event.keySet())
             body.put(key,event.get(key));

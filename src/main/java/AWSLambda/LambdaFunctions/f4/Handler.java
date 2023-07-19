@@ -13,22 +13,22 @@ import com.amazonaws.services.s3.model.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f4.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String,String> event, Context context) {
-        String AWS_ACCESS_KEY = "AKIARQP66F75QZZF4AGW";
-        String AWS_SECRET_KEY = "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";
+        String AWS_ACCESS_KEY = "xxxxxxxx";  // keys obtained from AWS Lambda
+        String AWS_SECRET_KEY = "xxxxxxxx";
         String bucketName = "serverless-network-intensive-source-bucket";
         AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
         AmazonS3 s3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).
-                withRegion(Regions.AP_EAST_1).build();
-        // 将存储桶内所有对象全都下载
+                withRegion(Regions.US_EAST_1).build();
+        // download all objects in S3 bucket
         ListObjectsV2Request v2Request = new ListObjectsV2Request().withBucketName(bucketName);
         ListObjectsV2Result v2Result = s3.listObjectsV2(v2Request);
         try {
-            for(S3ObjectSummary objectSummary : v2Result.getObjectSummaries()){  //获取一个存储桶中的所有对象
+            for(S3ObjectSummary objectSummary : v2Result.getObjectSummaries()){
                 String key = objectSummary.getKey();
                 S3Object S3object = s3.getObject(new GetObjectRequest(bucketName,key));
 

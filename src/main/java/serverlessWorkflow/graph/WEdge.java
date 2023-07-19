@@ -10,10 +10,6 @@ public class WEdge {
         return weight;
     }
 
-    public void setWeight(double weight) {
-        this.weight = weight;
-    }
-
     public double getEdge_delay() {
         return edge_delay;
     }
@@ -24,10 +20,6 @@ public class WEdge {
 
     public WVertex getV1() {
         return v1;
-    }
-
-    public void setV1(WVertex v1) {
-        this.v1 = v1;
     }
 
     public WVertex getV2() {

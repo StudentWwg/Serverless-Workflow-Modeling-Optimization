@@ -4,12 +4,16 @@ import AWSLambda.FunctionsMonitor.DataTypeOfLog;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
 import com.amazonaws.services.lambda.model.FunctionConfiguration;
 import com.amazonaws.services.lambda.model.ListFunctionsResult;
 import com.amazonaws.services.logs.AWSLogs;
 import com.amazonaws.services.logs.AWSLogsClientBuilder;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.stepfunctions.AWSStepFunctions;
 import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder;
 import com.amazonaws.services.stepfunctions.model.ListStateMachinesRequest;
@@ -31,7 +35,7 @@ import java.util.*;
 public class Tools {
     private static String AWS_ACCESS_KEY;
     private static String AWS_SECRET_KEY;
-    private static String regionName;  //香港地区
+    private static String regionName;
     private static AWSCredentials credentials;
     private static AWSLambda lambdaClient;
     private static AWSStepFunctions stepFunctionsClient;
@@ -40,7 +44,7 @@ public class Tools {
     public static AWSLambda getAWSLambdaClient() {
         getCredentials();
         AWSLambdaClientBuilder lambdaBuilder = AWSLambdaClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(Tools.credentials));
-        lambdaBuilder.setRegion(Tools.regionName); //设置服务器的区域
+        lambdaBuilder.setRegion(Tools.regionName);
         Tools.lambdaClient = lambdaBuilder.build();
         return Tools.lambdaClient;
     }
@@ -99,7 +103,7 @@ public class Tools {
         return Tools.credentials;
     }
 
-    public static String getFileContent(String path) {   //get event in the file
+    public static String getFileContent(String path) {
         StringBuffer stringBuffer = new StringBuffer();
         BufferedReader bufferedReader = null;
         try {
@@ -135,16 +139,17 @@ public class Tools {
         }
     }
 
-    public static void generateFunctionInvokeResult(ArrayList<DataTypeOfLog> logVector, String type, String APPName) {
+    public static void generateFunctionInvokeResult(ArrayList<DataTypeOfLog> logVector, String type, String APPName, int iter) {
         String filePath = null;
+        if (logVector.size() == 0)
+            return;
         try {
-            if(type.equals("FunctionInvoke")) {
+            if (type.equals("FunctionInvoke")) {
                 filePath = new File("").getCanonicalFile() + "/src/main/resources/AWSLambda_functions_invoke_results_got_by_function/AWSLambda_" +
                         logVector.get(0).getFunctionName() + "_Logs.xls";
-            }
-            else if(type.equals("CloudWatchLog")){
-                filePath = new File("").getCanonicalFile() + "/src/main/resources/AWSLambda_functions_invoke_results_got_by_cloudwatchlog/"+
-                        APPName+"/AWSLambda_" + logVector.get(0).getFunctionName() + "_Logs.xls";
+            } else if (type.equals("CloudWatchLog")) {
+                filePath = new File("").getCanonicalFile() + "/src/main/resources/AWSLambda_functions_invoke_results_got_by_cloudwatchlog/" +
+                        APPName + "/" + iter + "/AWSLambda_" + logVector.get(0).getFunctionName() + "_Logs.xls";
             }
 
             File file = new File(filePath);
@@ -152,7 +157,7 @@ public class Tools {
 
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet(logVector.get(logVector.size() - 1).getFunctionName() + "_logs");
-            HSSFRow row0 = sheet.createRow(0); //表头行
+            HSSFRow row0 = sheet.createRow(0);
             row0.createCell(0).setCellValue("FunctionName");
             row0.createCell(1).setCellValue("FunctionState");
             row0.createCell(2).setCellValue("MemorySize");
@@ -160,6 +165,7 @@ public class Tools {
             row0.createCell(4).setCellValue("Duration");
             row0.createCell(5).setCellValue("BilledDuration");
             row0.createCell(6).setCellValue("RequestedId");
+            row0.createCell(7).setCellValue("UTCTimeStamp");
             for (int i = 0; i < logVector.size(); i++) {
                 HSSFRow row = sheet.createRow(i + 1);
                 DataTypeOfLog log = logVector.get(i);
@@ -170,6 +176,7 @@ public class Tools {
                 row.createCell(4).setCellValue(log.getDuration());
                 row.createCell(5).setCellValue(log.getBilledDuration());
                 row.createCell(6).setCellValue(log.getRequestedId());
+                row.createCell(7).setCellValue(log.getUTCTimeStamp());
             }
             workbook.write(outputStream);
             outputStream.close();
@@ -178,23 +185,23 @@ public class Tools {
         }
     }
 
-    public static void generateTimeStampOfStateMachineInvokation(ArrayList<Long> timeStampOfExecutionStarted, ArrayList<Long> timeStampOfExecutionSucceed, String logGroupName) {
+    public static void generateTimeStampOfStateMachineInvokation(ArrayList<Long> timeStampOfExecutionStarted, ArrayList<Long> timeStampOfExecutionSucceed, String logGroupName, int iter) {
         String filePath = null;
         String APPName = logGroupName.replace("/aws/vendedlogs/states/SLA-opt-", "").replace("-StateMachine-Logs", "");
         try {
-            filePath = new File("").getCanonicalPath() + "/src/main/resources/AWSLambda_StateMachine_invoke_results/AWSLambda_StateMachine_" +
+            filePath = new File("").getCanonicalPath() + "/src/main/resources/AWSLambda_StateMachine_invoke_results/" + iter + "/AWSLambda_StateMachine_" +
                     APPName + "_Logs.xls";
             File file = new File(filePath);
             FileOutputStream outputStream = new FileOutputStream(file);
 
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet("StateMachine_" + APPName + "_logs");
-            HSSFRow row0 = sheet.createRow(0); //表头行
+            HSSFRow row0 = sheet.createRow(0);
             row0.createCell(0).setCellValue("Start");
             row0.createCell(1).setCellValue("End");
             row0.createCell(2).setCellValue("Duration");
 
-            int size = Math.min(timeStampOfExecutionStarted.size(),timeStampOfExecutionSucceed.size());
+            int size = Math.min(timeStampOfExecutionStarted.size(), timeStampOfExecutionSucceed.size());
             for (int i = 0; i < size; i++) {
                 HSSFRow aRow = sheet.createRow(i + 1);
                 long startTime = timeStampOfExecutionStarted.get(i);
@@ -219,59 +226,69 @@ public class Tools {
         else event.put("para1", "f5");
 
         randInt = new Random().nextInt(100);
-        if (randInt < 80) event.put("para2", "f9");
-        else event.put("para2", "f10");
+        if (randInt < 20) event.put("para2", "f6");
+        else event.put("para2", "f7");
 
         randInt = new Random().nextInt(100);
-        if (randInt < 70) event.put("para3", "f13");
+        if (randInt < 35) event.put("para3", "f13");
         else event.put("para3", "f14");
 
         randInt = new Random().nextInt(100);
         if (randInt < 95) event.put("para4", "f16");
         else event.put("para4", "f15");
 
-        if (APPName.equals("APP8")) {
-            event.remove("para2");
+        randInt = new Random().nextInt(100);
+        if (randInt < 70) event.put("para5", "f18");
+        else event.put("para5", "f19");
+
+        randInt = new Random().nextInt(100);
+        if (randInt < 50) event.put("para6", "f21");
+        else event.put("para6", "f22");
+
+        if (APPName.equals("APP10")) {
             event.remove("para3");
             event.remove("para4");
-        } else if (APPName.equals("APP10") || APPName.equals("APP12")) {
-            event.remove("para3");
-            event.remove("para4");
-        } else if (APPName.equals("APP14")) {
-            event.remove("para4");
+            event.remove("para5");
+        } else if (APPName.equals("APP16")) {
+            event.remove("para5");
+            event.remove("para6");
         }
+
         return event.toString();
     }
 
-    public static double[] generateAvgDurationAndNEOfFunction(String functionName){
+    public static double[] generateAvgDurationAndNEOfFunction(String functionName) {
         double[] durationAndNE = new double[2];
-        try{
+        try {
             String filePath = new File("").getCanonicalPath() + "/src/main/resources/AWSLambda_functions_invoke_results_got_by_cloudwatchlog/AWSLambda_" +
                     functionName + "_Logs.xls";
             FileInputStream inputStream = new FileInputStream(filePath);
             HSSFWorkbook workbook = new HSSFWorkbook(inputStream);
-            HSSFSheet sheet = workbook.getSheet(functionName+"_logs");
+            HSSFSheet sheet = workbook.getSheet(functionName + "_logs");
             int rowNum = sheet.getLastRowNum();
             double[] billedDuration = new double[rowNum];
-            for(int i=1;i<=rowNum;i++){
+            for (int i = 1; i <= rowNum; i++) {
                 HSSFRow aRow = sheet.getRow(i);
-                billedDuration[i-1] = aRow.getCell(5).getNumericCellValue();  //获取billed Duration 字段
+                billedDuration[i - 1] = aRow.getCell(5).getNumericCellValue();
             }
             double avgBilledDuration = Arrays.stream(billedDuration).average().getAsDouble();
             double NE = billedDuration.length;
             durationAndNE[0] = avgBilledDuration;
             durationAndNE[1] = NE;
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
         }
         return durationAndNE;
     }
 
-    public static void generateAccuracy(String APPName, double StateMachineDuration,
-                                        double StateMachineCost, double PerfCostModelDuration, double PerfCostModelCost){
-        try{
-            String filePath = new File("").getCanonicalPath() + "/src/main/resources/accuracy/"+APPName+"_Accuracy.xls";
+    public static double[] generateAccuracy(String APPName, double StateMachineDuration,
+                                            double StateMachineCost, double PerfCostModelDuration, double PerfCostModelCost, int index) {
+        double PerfAccuracy = 0;
+        double CostAccuracy = 0;
+        double[] accuracyResult = new double[2];
+        try {
+            String filePath = new File("").getCanonicalPath() + "/src/main/resources/accuracy/" + index + "/" + APPName + "_Accuracy.xls";
             File accuracyFile = new File(filePath);
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet("Accuracy");
@@ -294,16 +311,114 @@ public class Tools {
 
             DecimalFormat decimalFormat = new DecimalFormat("0.00");
             decimalFormat.setRoundingMode(RoundingMode.HALF_UP);
-            Double PerfAccuracy = 100- Math.abs(PerfCostModelDuration-StateMachineDuration)/PerfCostModelDuration * 100;
+            PerfAccuracy = 100 - Math.abs(PerfCostModelDuration - StateMachineDuration) / PerfCostModelDuration * 100;
             aRow.createCell(5).setCellValue(decimalFormat.format(PerfAccuracy) + "%");
-            double CostAccuracy = 100 - Math.abs(PerfCostModelCost-StateMachineCost) / PerfCostModelCost * 100;
-            aRow.createCell(6).setCellValue(decimalFormat.format(CostAccuracy) +"%");
+            CostAccuracy = 100 - Math.abs(PerfCostModelCost - StateMachineCost) / PerfCostModelCost * 100;
+            aRow.createCell(6).setCellValue(decimalFormat.format(CostAccuracy) + "%");
 
-            FileOutputStream outputStream  = new FileOutputStream(accuracyFile);
+            FileOutputStream outputStream = new FileOutputStream(accuracyFile);
             workbook.write(outputStream);
-        }catch (IOException e){
+            outputStream.close();
+            System.out.println("Performance Model Accuracy of " + APPName + ": " + new BigDecimal(PerfAccuracy).setScale(2,RoundingMode.HALF_UP) + "%.");
+            System.out.println("Cost Model Accuracy of " + APPName + ": " + new BigDecimal(CostAccuracy).setScale(2,RoundingMode.HALF_UP) + "%.");
+            accuracyResult[0] = PerfAccuracy;
+            accuracyResult[1] = CostAccuracy;
+            return accuracyResult;
+        } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
+        }
+        return accuracyResult;
+    }
+
+    public static void storeAvgAccuracyOfApp(String APPName, double avgPerfAccuracy, double avgCostAccuracy) {
+        try {
+            String filePath = new File("").getCanonicalPath() + "/src/main/resources/accuracy/" + APPName + "_AvgAccuracy.xls";
+            File accuracyFile = new File(filePath);
+            HSSFWorkbook workbook = new HSSFWorkbook();
+            HSSFSheet sheet = workbook.createSheet("Accuracy");
+
+            HSSFRow head = sheet.createRow(0);
+            head.createCell(0).setCellValue("APPName");
+            head.createCell(1).setCellValue("PerfAccuracy");
+            head.createCell(2).setCellValue("CostAccuracy");
+
+            HSSFRow aRow = sheet.createRow(1);
+            aRow.createCell(0).setCellValue(APPName);
+            aRow.createCell(1).setCellValue(avgPerfAccuracy);
+            aRow.createCell(2).setCellValue(avgCostAccuracy);
+
+            FileOutputStream outputStream = new FileOutputStream(accuracyFile);
+            workbook.write(outputStream);
+            outputStream.close();
+            System.out.println("Average Performance Model Accuracy of " + APPName + ": " +
+                    new BigDecimal(avgPerfAccuracy).setScale(2,RoundingMode.HALF_UP) + "%.");
+            System.out.println("Average Cost Model Accuracy of " + APPName + ": " +
+                    new BigDecimal(avgCostAccuracy).setScale(2,RoundingMode.HALF_UP) + "%.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public static long getTotalSizeOfS3Object() {
+        getAWSLambdaAccessConfig();
+        String bucketName = "serverless-network-intensive-source-bucket";
+        AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY,AWS_SECRET_KEY);
+        AmazonS3 s3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).
+                withRegion(Regions.US_EAST_1).build();
+        // download all objects in S3 bucket
+        ListObjectsV2Request v2Request = new ListObjectsV2Request().withBucketName(bucketName);
+        ListObjectsV2Result v2Result = s3.listObjectsV2(v2Request);
+        long bytes = 0;
+        for(S3ObjectSummary objectSummary : v2Result.getObjectSummaries()){
+            String key = objectSummary.getKey();
+            S3Object S3object = s3.getObject(new GetObjectRequest(bucketName,key));
+            ObjectMetadata objectMetadata = S3object.getObjectMetadata();
+            bytes += objectMetadata.getContentLength();
+        }
+        return bytes;
+    }
+
+    public static void generatePerformanceProfileBasedOnFunctionExecutionLogs() throws IOException {
+        ArrayList<Integer> availableMemList = new ArrayList<>();
+        for (int i = 192; i < 1024; i = i + 64)
+            availableMemList.add(i);
+        for (int i = 1024; i < 2048; i = i + 128)
+            availableMemList.add(i);
+        for (int i = 2048; i < 4096; i = i + 256)
+            availableMemList.add(i);
+        for (int i = 4096; i <= 10240; i = i + 512)
+            availableMemList.add(i);
+
+        ArrayList<String> functionNames = new ArrayList<>();
+        for (int i = 1; i <= 22; i++)
+            functionNames.add("f" + i);
+
+        for (String functionName : functionNames) {
+            HashMap<Integer, Double> perfProfile = new HashMap<>();
+            String logFilePath = new File("").getCanonicalFile() + "/src/main/resources/AWSLambda_functions_invoke_results_got_by_function/" +
+                    "AWSLambda_" + functionName + "_Logs.xls";
+            HSSFWorkbook workbook = new HSSFWorkbook(new FileInputStream(logFilePath));
+            HSSFSheet sheet = workbook.getSheet(functionName + "_logs");
+            for (int i = 0; i < availableMemList.size(); i++) {
+                double rt = 0;
+                for (int j = i * 100 + 1; j < i * 100 + 1 + 100; j++) {
+                    HSSFRow aRow = sheet.getRow(j);
+                    rt += aRow.getCell(5).getNumericCellValue();
+                }
+                rt /= 100;
+                perfProfile.put(availableMemList.get(i),rt);
+            }
+
+            String filePrefix = new File("").getCanonicalFile() + "/src/main/resources/AWSLambda_functions_perf_profile/";
+            File file = new File(filePrefix + functionName + "_perf_profile.json");
+            JSONObject jsonObject = new JSONObject();
+            for (Integer item : perfProfile.keySet())
+                jsonObject.put(String.valueOf(item), perfProfile.get(item));
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            String s = jsonObject.toString();
+            fileOutputStream.write(s.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

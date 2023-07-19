@@ -5,13 +5,13 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f9.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         double pi_n = 0;
-        while (i<300){
+        while (i<1000){
             pi_n = pi(9999);
             i++;
         }

@@ -1,9 +1,5 @@
 package util;
 
-/**
- * Least square method class.
- * https://blog.csdn.net/funnyrand/article/details/46742561
- */
 public class LeastSquareMethod {
 
     private double[] x;
@@ -12,13 +8,6 @@ public class LeastSquareMethod {
     private int n;
     private double[] coefficient;
 
-    /**
-     * Constructor method.
-     *
-     * @param x Array of x
-     * @param y Array of y
-     * @param n The order of polynomial
-     */
     public LeastSquareMethod(double[] x, double[] y, int n) {
         if (x == null || y == null || x.length < 2 || x.length != y.length || n < 2) {
             throw new IllegalArgumentException("IllegalArgumentException occurred.");
@@ -33,14 +22,6 @@ public class LeastSquareMethod {
         compute();
     }
 
-    /**
-     * Constructor method.
-     *
-     * @param x      Array of x
-     * @param y      Array of y
-     * @param weight Array of weight
-     * @param n      The order of polynomial
-     */
     public LeastSquareMethod(double[] x, double[] y, double[] weight, int n) {
         if (x == null || y == null || weight == null || x.length < 2 || x.length != y.length
                 || x.length != weight.length || n < 2) {
@@ -53,21 +34,10 @@ public class LeastSquareMethod {
         compute();
     }
 
-    /**
-     * Get coefficient of polynomial.
-     *
-     * @return coefficient of polynomial
-     */
     public double[] getCoefficient() {
         return coefficient;
     }
 
-    /**
-     * Used to calculate value by given x.
-     *
-     * @param x x
-     * @return y
-     */
     public double fit(double x) {
         if (coefficient == null) {
             return 0;
@@ -79,23 +49,10 @@ public class LeastSquareMethod {
         return sum;
     }
 
-    /**
-     * Use Newton's method to solve equation.
-     *
-     * @param y y
-     * @return x
-     */
     public double solve(double y) {
         return solve(y, 1.0d);
     }
 
-    /**
-     * Use Newton's method to solve equation.
-     *
-     * @param y      y
-     * @param startX The start point of x
-     * @return x
-     */
     public double solve(double y, double startX) {
         final double EPS = 0.0000001d;
         if (coefficient == null) {
@@ -110,13 +67,6 @@ public class LeastSquareMethod {
         return x2;
     }
 
-    /*
-     * Calculate the reciprocal of x.
-     *
-     * @param x x
-     *
-     * @return the reciprocal of x
-     */
     private double calcReciprocal(double x) {
         if (coefficient == null) {
             return 0;
@@ -128,9 +78,6 @@ public class LeastSquareMethod {
         return sum;
     }
 
-    /*
-     * This method is used to calculate each elements of augmented matrix.
-     */
     private void compute() {
         if (x == null || y == null || x.length <= 1 || x.length != y.length || x.length < n
                 || n < 2) {
@@ -155,21 +102,9 @@ public class LeastSquareMethod {
             }
         }
 
-        // Now we need to calculate each coefficients of augmented matrix
         coefficient = calcLinearEquation(a, b);
     }
 
-    /*
-     * Calculate linear equation.
-     *
-     * The matrix equation is like this: Ax=B
-     *
-     * @param a two-dimensional array
-     *
-     * @param b one-dimensional array
-     *
-     * @return x, one-dimensional array
-     */
     private double[] calcLinearEquation(double[][] a, double[] b) {
         if (a == null || b == null || a.length == 0 || a.length != b.length) {
             return null;
@@ -222,10 +157,8 @@ public class LeastSquareMethod {
             count++;
         }
 
-        // Calculate sub linear equation
         double[] result2 = calcLinearEquation(aa, bb);
 
-        // After sub linear calculation, calculate the current coefficient
         double sum = b[posx];
         count = 0;
         for (int i = 0; i <= len; i++) {

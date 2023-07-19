@@ -20,13 +20,12 @@ public class Creator {
 
     public static void createFunctions() {
         File[] allFunctionsDirectory = getAllFunctionsCode();
-        String[] packageNames = new String[allFunctionsDirectory.length];  //package名
-        Creator.functionNames = new String[allFunctionsDirectory.length];  //Lambda 函数名 (与package名相同)
-        File[] allFunctionsJar = new File[allFunctionsDirectory.length];  //jar包路径
+        String[] packageNames = new String[allFunctionsDirectory.length];
+        Creator.functionNames = new String[allFunctionsDirectory.length];
+        File[] allFunctionsJar = new File[allFunctionsDirectory.length];
         for (int i = 0; i < allFunctionsDirectory.length; i++) {
             packageNames[i] = allFunctionsDirectory[i].getName();
             Creator.functionNames[i] = allFunctionsDirectory[i].getName();
-            //将所有的以jar结尾的部署文件包存储到allFunctionsJar中
             File[] jars = allFunctionsDirectory[i].listFiles((dir, name) -> {
                 if (name.endsWith("jar")) return true;
                 else return false;
@@ -38,17 +37,17 @@ public class Creator {
             allFunctionsJar[i] = jars[0];
         }
 
-        lambdaClient = Tools.getAWSLambdaClient();  //获取具有访问凭证的AWSLambda对象
+        lambdaClient = Tools.getAWSLambdaClient();
 
         for (int i = 0; i < Creator.functionNames.length; i++) {
             try {
                 CreateFunctionRequest createFunctionRequest = new CreateFunctionRequest().withFunctionName(Creator.functionNames[i]).withRuntime(Runtime.Java11).
-                        withRole("arn:aws:iam::104150740987:role/serverless-opt-different-kinds-of-tasks").withMemorySize(128).
+                        withRole("arn:aws:iam::104150740987:role/serverless-opt-different-kinds-of-tasks").withMemorySize(10240).
                         withHandler(packageNames[i] + "." + "Handler::handleRequest").
                         withTimeout(180).withCode(new FunctionCode().withZipFile(ByteBuffer.wrap(Files.readAllBytes(Path.of(allFunctionsJar[i].getPath()))))).
                         withDescription("Lambda function " + Creator.functionNames[i]);
                 CreateFunctionResult createFunctionResult = Creator.lambdaClient.createFunction(createFunctionRequest);
-                System.out.println(Creator.functionNames[i] + " has been created.");
+                System.out.println("Lambda Function " + Creator.functionNames[i] + " has been created.");
             } catch (IOException e) {
                 e.printStackTrace();
             }

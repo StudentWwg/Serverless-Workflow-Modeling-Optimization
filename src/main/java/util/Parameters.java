@@ -15,13 +15,13 @@ public class Parameters {
             JSONObject jsonObject = new JSONObject(jsonContent);
             Optimizer.setServerlessWorkflowDelayType(jsonObject.getString("serverlessWorkflowDelayType"));
             Optimizer.setServerlessWorkflowPlatform(jsonObject.getString("serverlessWorkflowPlatform"));
-            Optimizer.setNumOfGenesOfCPOGA(jsonObject.getInt("numOfGenesOfGA"));
-            Optimizer.setCrossRateOfCPOGA(jsonObject.getDouble("crossRateOfGA"));
-            Optimizer.setMutateRateOfCPOGA(jsonObject.getDouble("mutateRateOfGA"));
-            Optimizer.setNumOfGenerationsOfCPOGA(jsonObject.getInt("numOfGenerationsOfGA"));
-            Optimizer.setETA_M_OfCPOGA(jsonObject.getDouble("ETA_M_Of_GA"));
-            Optimizer.setBudgetNumberOfCPOGA(jsonObject.getInt("budgetNumberOfGA"));
-            Optimizer.setPerformanceNumberOfCPOGA(jsonObject.getInt("performanceNumberOfGA"));
+            Optimizer.setNumOfGenesOfEASW(jsonObject.getInt("numOfGenesOfEASW"));
+            Optimizer.setCrossRateOfEASW(jsonObject.getDouble("crossRateOfEASW"));
+            Optimizer.setMutationRateOfEASW(jsonObject.getDouble("mutationRateOfEASW"));
+            Optimizer.setNumOfGenerationsOfEASW(jsonObject.getInt("numOfGenerationsOfEASW"));
+            Optimizer.setETA_M_OfEASW(jsonObject.getDouble("ETA_M_Of_EASW"));
+            Optimizer.setBudgetNumberOfEASW(jsonObject.getInt("budgetNumberOfEASW"));
+            Optimizer.setPerformanceNumberOfEASW(jsonObject.getInt("performanceNumberOfEASW"));
             Optimizer.setBCRthresholdOfPRCP(jsonObject.getDouble("BCRthresholdOfPRCP"));
         } catch (IOException e) {
             e.printStackTrace(System.out);

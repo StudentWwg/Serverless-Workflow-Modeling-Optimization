@@ -5,20 +5,17 @@ import java.util.TreeMap;
 
 public class WVertex implements Comparable {
     private String vertexInfo;
-    private double rt; // response time
+    private double rt;
     private TreeMap<Integer, Double> perf_profile;
-    private int mem; // memory configuration
+    private int mem;
     private int[] available_mem_list;
     private double cost;
     private double node_delay;
-    private double BCR;  //BCR属性只用于对比算法
+    private double BCR;
+    private String taskType;
 
     public String getVertexInfo() {
         return vertexInfo;
-    }
-
-    public void setVertexInfo(String vertexInfo) {
-        this.vertexInfo = vertexInfo;
     }
 
     public double getRt() {
@@ -31,10 +28,6 @@ public class WVertex implements Comparable {
 
     public TreeMap<Integer, Double> getPerf_profile() {
         return perf_profile;
-    }
-
-    public void setPerf_profile(TreeMap<Integer, Double> perf_profile) {
-        this.perf_profile = perf_profile;
     }
 
     public int getMem() {
@@ -77,7 +70,15 @@ public class WVertex implements Comparable {
         this.BCR = BCR;
     }
 
-    public WVertex(String vertexInfo) {
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
+
+    public WVertex(String vertexInfo, String taskType) {
         this.vertexInfo = vertexInfo;
         rt = 0;
         perf_profile = new TreeMap<Integer, Double>();
@@ -86,19 +87,22 @@ public class WVertex implements Comparable {
         cost = 0;
         node_delay = 0;
         BCR = 0;
+        this.taskType = taskType;
     }
-    public WVertex(WVertex vertex){  // copy constructor
-        this.vertexInfo  = vertex.vertexInfo;;
+
+    public WVertex(WVertex vertex) {
+        this.vertexInfo = vertex.vertexInfo;
+        ;
         this.rt = vertex.rt;
         this.cost = vertex.cost;
         this.node_delay = vertex.node_delay;
         this.BCR = vertex.BCR;
         this.mem = vertex.mem;
         this.perf_profile = new TreeMap<Integer, Double>();
-        for(Integer key : vertex.perf_profile.keySet())
-            this.perf_profile.put(key,vertex.perf_profile.get(key));
+        for (Integer key : vertex.perf_profile.keySet())
+            this.perf_profile.put(key, vertex.perf_profile.get(key));
         this.available_mem_list = new int[vertex.available_mem_list.length];
-        for(int i=0;i< this.available_mem_list.length;i++){
+        for (int i = 0; i < this.available_mem_list.length; i++) {
             this.available_mem_list[i] = vertex.available_mem_list[i];
         }
     }
@@ -115,5 +119,18 @@ public class WVertex implements Comparable {
             return this.vertexInfo.length() - temp.vertexInfo.length();
         else
             return this.vertexInfo.compareTo(temp.vertexInfo);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WVertex vertex = (WVertex) o;
+        return vertexInfo.equals(vertex.vertexInfo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(vertexInfo);
     }
 }

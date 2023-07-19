@@ -5,14 +5,15 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 import java.util.HashMap;
 import java.util.Map;
-//处理程序: f6.Handler::handleRequest
+
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
-        double pi_n = 0;
-        while (i<200){
-            pi_n = pi(13000);
+        double x = 123456789;
+        double sqrtOfX = 0;
+        while (i<100000){
+            sqrtOfX = sqrtX(x);
             i++;
         }
 
@@ -20,7 +21,7 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
         head.put("StatusCode", "200");
         head.put("FunctionName", "f6");
         head.put("Task type", "CPU intensive task");
-        head.put("PI", String.valueOf(pi_n));
+        head.put("sqrtOfX", String.valueOf(sqrtOfX));
         Map<String, String> body = new HashMap<>();
         for(String key : event.keySet())
             body.put(key,event.get(key));
@@ -30,17 +31,12 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
         return result;
     }
 
-    private static double pi(int n){
-        int numInCircle = 0;
-        double x, y;
-        double pi;
-        for(int i=0;i < n; i++){
-            x = Math.random();
-            y = Math.random();
-            if(x * x + y * y < 1)
-                numInCircle++;
+    private static double sqrtX(double x) {
+        double x0 = x / 2;
+        for (int i = 0; i < 500; i++) {
+            double x1 = (x0 + x / x0) / 2;
+            x0 = x1;
         }
-        pi = (4.0 * numInCircle) / n;
-        return pi;
+        return x0;
     }
 }

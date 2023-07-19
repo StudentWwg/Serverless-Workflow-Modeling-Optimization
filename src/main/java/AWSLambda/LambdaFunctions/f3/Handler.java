@@ -6,14 +6,13 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import java.util.HashMap;
 import java.util.Map;
 
-//处理程序: f3.Handler::handleRequest
 public class Handler implements RequestHandler<Map<String, String>, Map<String, Map<String, String>>> {
 
     @Override
     public Map<String, Map<String, String>> handleRequest(Map<String, String> event, Context context) {
         int i=0;
         int finalResult = 0;
-        while(i<300){
+        while(i<1600){
             finalResult = fibonacci(25);
             i++;
         }
@@ -22,6 +21,7 @@ public class Handler implements RequestHandler<Map<String, String>, Map<String, 
         head.put("StatusCode", "200");
         head.put("FunctionName", "f3");
         head.put("Task type", "CPU intensive task");
+        head.put("fibonacci", String.valueOf(finalResult));
         Map<String, String> body = new HashMap<>();
         for(String key : event.keySet())
             body.put(key,event.get(key));

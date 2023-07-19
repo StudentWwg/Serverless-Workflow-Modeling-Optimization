@@ -12,62 +12,96 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class Invoker {
-    private static AWSLambda lambdaClient;
+    public static ArrayList<Integer> availableMemory = new ArrayList<>();
+    public static ArrayList<Thread> threads = new ArrayList<>();
 
-    public static void invokeFunctions(String[] functionName) {
-        lambdaClient = Tools.getAWSLambdaClient();
-        String filePath = null;
-        try {
-            filePath = new File("").getCanonicalFile().getPath() + "/src/main/resources/AWSLambda_request_events/testEvent.txt";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String requestEvent = Tools.getFileContent(filePath);
-        for (int i = 0; i < functionName.length; i++) {
-            if(!(functionName[i].equals("f2")))
+    static {
+        for (int size = 192; size < 1024; size += 64)
+            Invoker.availableMemory.add(size);
+        for (int size = 1024; size < 2048; size += 128)
+            Invoker.availableMemory.add(size);
+        for (int size = 2048; size < 4096; size += 256)
+            Invoker.availableMemory.add(size);
+        for (int size = 4096; size <= 10240; size += 512)
+            Invoker.availableMemory.add(size);
+//         Invoker.availableMemory.add(192);
+    }
+
+    public void invokeFunctions(String[] functionNames) {
+        for (int i = 0; i < functionNames.length; i++) {
+            String functionName = functionNames[i];
+            if(functionName.equals("f1"))
                 continue;
+            Thread aThread = new Thread(new MyThread(functionName));
+            threads.add(aThread);
+        }
+        for(Thread aThread : threads){
+            aThread.start();
+        }
+    }
+
+    class MyThread implements Runnable {
+        String functionName;
+
+        MyThread(String functionName) {
+            this.functionName = functionName;
+        }
+
+        @Override
+        public void run() {
+            AWSLambda lambdaClient;
+            String filePath = null;
+            try {
+                filePath = new File("").getCanonicalFile().getPath() + "/src/main/resources/AWSLambda_request_events/testEvent.txt";
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String requestEvent = Tools.getFileContent(filePath);
+
             ArrayList<DataTypeOfLog> logVector = new ArrayList<>();
-            Map<Integer, Integer> perfProfile = new TreeMap();  //记录各函数的存储容量和花费时间的映射关系
-            for (int memorySize = 192; memorySize <= 3008; memorySize += 64) {
-                lambdaClient = Tools.getAWSLambdaClient();   //防止访问用户过期
-                int repeatedTimes = 100;  //函数重复执行次数
+            Map<Integer, Integer> perfProfile = new TreeMap();
+
+            for (int memorySize : Invoker.availableMemory) {
+                lambdaClient = Tools.getAWSLambdaClient();
+                int repeatedTimes = 20;  //函数重复执行次数
                 int[] billedDurations = new int[repeatedTimes];
                 UpdateFunctionConfigurationRequest updateFunctionConfigurationRequest = new UpdateFunctionConfigurationRequest();
-                updateFunctionConfigurationRequest.withFunctionName(functionName[i]).withMemorySize(memorySize);  //更新函数内存大小
+                updateFunctionConfigurationRequest.withFunctionName(functionName).withMemorySize(memorySize);
                 UpdateFunctionConfigurationResult updateFunctionConfigurationResult = lambdaClient.updateFunctionConfiguration(updateFunctionConfigurationRequest);
+                System.out.println("The state of updating memory size of " + functionName + " : " + updateFunctionConfigurationResult.getState());
+                try {
+                    TimeUnit.SECONDS.sleep(3);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                for (int j = 0; j < repeatedTimes + 10; j++) {
+                    InvokeRequest invokeRequest = new InvokeRequest().withFunctionName(functionName).withLogType(LogType.Tail).withPayload(requestEvent);
+                    InvokeResult response = lambdaClient.invoke(invokeRequest);
+                    DataTypeOfLog dataTypeOfLog = Monitor.logResultParsing(response, functionName);
+                    if (j >= 10) {
+                        logVector.add(dataTypeOfLog);
+                        billedDurations[j - 10] = dataTypeOfLog.getBilledDuration();
+                    }
+                    System.out.printf("Iteration: %d, %s worked, MemorySize: %d, BilledDuration: %d ms, FunctionState: %s, Time: %s\n", (j + 1), dataTypeOfLog.getFunctionName(),
+                            dataTypeOfLog.getMemorySize(), dataTypeOfLog.getBilledDuration(), dataTypeOfLog.getFunctionState(), Instant.now().toString());
+//                    if (j % 20 == 0) lambdaClient = Tools.getAWSLambdaClient();
+                }
+                double count = 0;
+                for (int item : billedDurations)
+                    count += item;
+                int avgbilledDuration = (int) (count / billedDurations.length + 0.5);
+                perfProfile.put(memorySize, avgbilledDuration);
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-                for (int j = 0; j < repeatedTimes + 10; j++) {  //每个函数执行 repeatedTimes + 10 次，前10次不计入统计结果
-                    System.out.println("The state of updating memory size of " + functionName[i] + " : " + updateFunctionConfigurationResult.getState());
-                    InvokeRequest invokeRequest = new InvokeRequest().withFunctionName(functionName[i]).withLogType(LogType.Tail).withPayload(requestEvent);
-                    InvokeResult response = lambdaClient.invoke(invokeRequest);
-                    DataTypeOfLog dataTypeOfLog = Monitor.logResultParsing(response, functionName[i]);
-                    logVector.add(dataTypeOfLog);
-                    if(j>=10)
-                        billedDurations[j-10] = dataTypeOfLog.getBilledDuration();
-                    System.out.printf("%s worked.  MemorySize: %d, BilledDuration: %d ms, FunctionState: %s, Time: %s\n", dataTypeOfLog.getFunctionName(),
-                            dataTypeOfLog.getMemorySize(), dataTypeOfLog.getBilledDuration(), dataTypeOfLog.getFunctionState(), Instant.now().toString());
-                    if(j%50==0) lambdaClient = Tools.getAWSLambdaClient();
-                }
-                double count = 0;
-                for (int item : billedDurations)
-                    count += item;
-                int avgbilledDuration = (int) (count / billedDurations.length + 0.5);  //计算平均值
-                perfProfile.put(memorySize, avgbilledDuration);
-                try {
-                    TimeUnit.SECONDS.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
 
-            Tools.generateFunctionPerfProfile(perfProfile, functionName[i]);
-            Tools.generateFunctionInvokeResult(logVector,"FunctionInvoke", null);
+            Tools.generateFunctionPerfProfile(perfProfile, functionName);
+            Tools.generateFunctionInvokeResult(logVector, "FunctionInvoke", null, 0);
+            // lambdaClient.shutdown();
         }
-        lambdaClient.shutdown();
     }
 }

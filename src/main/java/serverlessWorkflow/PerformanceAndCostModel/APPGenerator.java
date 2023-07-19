@@ -15,81 +15,9 @@ public class APPGenerator {
     private double[] m2_k;
     private double[] m2_b;
 
-    public int[] getMem_list() {
-        return mem_list;
-    }
-
-    public void setMem_list(int[] mem_list) {
-        this.mem_list = mem_list;
-    }
-
-    public int getSeed() {
-        return seed;
-    }
-
-    public void setSeed(int seed) {
+    public APPGenerator(int seed, String type, int[] mem_list) {
         this.seed = seed;
-    }
-
-    public int[] getModel_type() {
-        return model_type;
-    }
-
-    public void setModel_type(int[] model_type) {
-        this.model_type = model_type;
-    }
-
-    public int[] getM1_a() {
-        return m1_a;
-    }
-
-    public void setM1_a(int[] m1_a) {
-        this.m1_a = m1_a;
-    }
-
-    public double[] getM1_b() {
-        return m1_b;
-    }
-
-    public void setM1_b(double[] m1_b) {
-        this.m1_b = m1_b;
-    }
-
-    public int[] getM1_c() {
-        return m1_c;
-    }
-
-    public void setM1_c(int[] m1_c) {
-        this.m1_c = m1_c;
-    }
-
-    public double[] getM1_d() {
-        return m1_d;
-    }
-
-    public void setM1_d(double[] m1_d) {
-        this.m1_d = m1_d;
-    }
-
-    public double[] getM2_k() {
-        return m2_k;
-    }
-
-    public void setM2_k(double[] m2_k) {
-        this.m2_k = m2_k;
-    }
-
-    public double[] getM2_b() {
-        return m2_b;
-    }
-
-    public void setM2_b(double[] m2_b) {
-        this.m2_b = m2_b;
-    }
-
-    public APPGenerator(int seed, String type, int[] mem_list) {  //模拟函数的mem和rt对应关系
-        this.seed = seed;
-        if (mem_list == null)  //available memory options
+        if (mem_list == null)
             mem_list = new int[]{192, 256, 320, 384, 448, 512, 576, 640, 704, 768,
                     832, 896, 960, 1024, 1088, 1152, 1216, 1280, 1344, 1408, 1472, 1536,
                     1600, 1664, 1728, 1792, 1856, 1920, 1984, 2048, 2112, 2176, 2240, 2304,
@@ -101,7 +29,7 @@ public class APPGenerator {
         }
         Random rand = new Random();
         rand.setSeed(this.seed);
-        this.model_type = new int[100];  //假设最多有100个结点
+        this.model_type = new int[100];
         if (type.equals("mixed")) {
             for (int i = 0; i < model_type.length; i++)
                 model_type[i] = rand.nextInt(3);
@@ -132,7 +60,7 @@ public class APPGenerator {
             m2_b[i] = Math.abs(3000 * m2_k[i]) + (double) rand.nextInt(900) + 100;
     }
 
-    public void get_rt_mem_data(int num, WVertex[] vertexs) { // n是结点号   返回的HashMap是perf_profile
+    public void get_rt_mem_data(int num, WVertex[] vertexs) {
         for (int n = 1; n <= num; n++) {
             double ydata = 1.0;
             for (int i = 0; i < this.mem_list.length; i++) {

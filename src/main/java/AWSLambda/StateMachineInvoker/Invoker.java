@@ -25,7 +25,7 @@ public class Invoker {
             String stateMachineArn = stateMachine.getStateMachineArn();
             String inputEvent = Tools.getStateMachineExecutionEvent(APPName);
             StartExecutionRequest startExecutionRequest = new StartExecutionRequest().withStateMachineArn(stateMachineArn).withInput(inputEvent);
-            StartExecutionResult startExecutionResult = stepFunctionsClient.startExecution(startExecutionRequest);
+            stepFunctionsClient.startExecution(startExecutionRequest);
             System.out.println("Iteration : "+ repeatedTimes+ ", " + APPName+" execution complete! Time: " + new Date().toString());
         }
     }
