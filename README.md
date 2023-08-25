@@ -1,19 +1,21 @@
 # Serverless-Workflow-Modeling-Optimization
 This repository contains source code and experimental results about modeling serverless workflows and optimizing allocated resources.
-## Experiments on AWS Lambda
-
-We design 22 serverless functions, their code are contained in package "[src/main/java/AWSLambda/LambdaFunctions](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/AWSLambda/LambdaFunctions)". These functions are orchestrated to compose three serverless workflow, APP10, APP16, APP22. Amazon state language definition of three serverless workflows is included in "[src/main/java/AWSLambda/ServerlessAPPAmazonLanguageDefinition](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/AWSLambda/ServerlessAPPAmazonLanguageDefinition)". Code in  package "[src/main/java/AWSLambda](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/AWSLambda)" includes accessing AWS Lambda via keys of a user account, creating, invoking functions on AWS Lambda, querying execution logs of functions, invoking state machines, querying execution logs of state machines, and calculating the accuracy of  performance and cost model.
-
-The results querying from AWS CloudWatch  of invoking functions and state machines are stored in packages under "[src/main/resources](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/resources)".
 
 ## Serverless Workflow
 
-There are 3 serverless workflows containing sequence, choice and parallel structures in our experiments. The code included in package "[src/main/java/serverlessWorkflow](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/serverlessWorkflow)" is related to creating directed-acyclic graph through json files, specific implementation of performance and cost model.
+A serverless workflow is the orchestration of serverless functions. There are [3 serverless workflows](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/resources/serverless_workflow_json_files) containing sequence, choice and parallel structures in our experiments. We design the method of modeling a serverless application according to the price on AWS Lambda to be the foundation of optimization of performance and cost under constraints.
 
-## Our Algorithm  and Compared Optimization Algorithms
+## Research Problem
 
-We compared our optimization algorithm EASW with three algorithms, DFBA, PRCP and UWC.
+Resources allocated to a serverless function lead to different performance and cost. Thus, we need to find an optimal solution providing best performance or cost under budget and performance constraints, namely BCPO(Budget-Constrainted Performance Optimization) and PCCO(Performance-Constrainted Cost Optimization).
 
-The implementation of DFBA is in package "[src/main/java/DFBA](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/DFBA)". The implementation of PRCP is in package "[src/main/java/PRCP](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/PRCP)". The implementation of UWC is in package "[src/main/java/UWC](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/UWC) ". The implementation of EASW is in package "[src/main/java/EASW](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/EASW)".
+## Algorithms
 
-We run program 10 times and store optimization results of two problems, BCCO and PCCO, in package "[src/main/resources/opt_curve_data ](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/resources/opt_curve_data)".
+We design and implement an evolutionary algorithm [EASW](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/EASW) to optimize allocated resources of all functions in a serverless workflow under a budget constraint or a performance constraint.
+Besides, We compared our optimization algorithm EASW with three algorithms, [DFBA](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/DFBA), [PRCP](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/PRCP) and [UWC](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/UWC).
+
+## Experiments on AWS Lambda
+
+We design and employ [22 serverless functions](https://github.com/StudentWwg/Serverless-Workflow-Modeling-Optimization/tree/main/src/main/java/AWSLambda/LambdaFunctions) on AWS Lambda. These functions are orchestrated to compose three serverless workflow, APP10, APP16, APP22. 
+We first validate the accuracy of our performance and cost model, and the results indicate that our model can similate the execution process of serverless workflows and obtain performance and cost correctly. 
+Based on our performance and cost model, we implement our optimization algorithm EASW and compared algorithms. All constraints are executed 10 times to avoid randomness. Final results prove that our algorithm have a better performance.
